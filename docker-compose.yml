@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  users:
+    build: ./users
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./users:/app
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - appointments
+      - results
+
+  appointments:
+    build: ./appointments
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./appointments:/app
+      - appointments-data:/data
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - users
+      - results
+
+  results:
+    build: ./results
+    ports:
+      - '3002:3002'
+    volumes:
+      - ./results:/app
+      - results-data:/data
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - users
+      - appointments
+
+volumes:
+  appointments-data:
+  results-data:
