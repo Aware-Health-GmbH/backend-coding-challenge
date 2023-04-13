@@ -1,0 +1,20 @@
+{
+  "name": "appointment-microservice",
+  "version": "1.0.0",
+  "description": "A microservice for managing appointments",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "test": "echo 'No tests configured'"
+  },
+  "dependencies": {
+    "fastify": "^3.21.0",
+    "sqlite": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "nodemon": "^2.0.13",
+    "typescript": "^4.4.4"
+  }
+}
