@@ -1,15 +1,23 @@
 import fastify from 'fastify';
-import sqlite from 'sqlite';
-import { Appointment } from './appointment';
+import sqlite3 from 'sqlite3'
+import {open} from 'sqlite'
+import {AppointemntStatus, Appointment} from "./types";
 
-const app = fastify();
+export const app = fastify();
 const PORT = 3000;
 
 // Connect to SQLite database
-const dbPromise = sqlite.open({
+const dbPromise = open({
   filename: 'appointments.db',
-  driver: sqlite.Database,
+  driver: sqlite3.Database,
 });
+
+interface AppointmentRequestBody {
+  facilityId: string,
+  timeSlotId: string,
+  userId: string,
+  status: AppointemntStatus,
+}
 
 // Define CRUD endpoints for appointments
 app.get('/appointments', async (request, reply) => {
@@ -18,44 +26,44 @@ app.get('/appointments', async (request, reply) => {
   reply.send(appointments);
 });
 
-app.get('/appointments/:id', async (request, reply) => {
+app.get<{ Params: { id: string } }>('/appointments/:id', async (request, reply) => {
   const db = await dbPromise;
-  const { id } = request.params;
+  const {id} = request.params;
   const appointment = await db.get<Appointment>('SELECT * FROM appointments WHERE id = ?', id);
   if (!appointment) {
-    reply.status(404).send({ message: 'Appointment not found' });
+    reply.status(404).send({message: 'Appointment not found'});
   } else {
     reply.send(appointment);
   }
 });
 
-app.post('/appointments', async (request, reply) => {
+app.post<{ Body: AppointmentRequestBody }>('/appointments', async (request, reply) => {
   const db = await dbPromise;
-  const { facility, timeSlot, userId } = request.body;
+  const {facilityId, timeSlotId, userId} = request.body;
   const result = await db.run(
-    'INSERT INTO appointments (status, facility, timeSlot, userId) VALUES (?, ?, ?, ?)',
+    'INSERT INTO appointments (status, facilityId, timeSlotId, userId) VALUES (?, ?, ?, ?)',
     'CONFIRMED',
-    JSON.stringify(facility),
-    JSON.stringify(timeSlot),
+    facilityId,
+    timeSlotId,
     userId
   );
   const appointment = await db.get<Appointment>('SELECT * FROM appointments WHERE id = ?', result.lastID);
-  reply.send(appointment);
+  reply.code(201).send(appointment);
 });
 
-app.put('/appointments/:id', async (request, reply) => {
+app.put<{ Params: { id: string }, Body: AppointmentRequestBody }>('/appointments/:id', async (request, reply) => {
   const db = await dbPromise;
-  const { id } = request.params;
-  const { facility, timeSlot, status } = request.body;
+  const {id} = request.params;
+  const {facilityId, timeSlotId, status} = request.body;
   const appointment = await db.get<Appointment>('SELECT * FROM appointments WHERE id = ?', id);
   if (!appointment) {
-    reply.status(404).send({ message: 'Appointment not found' });
+    reply.status(404).send({message: 'Appointment not found'});
   } else {
     await db.run(
-      'UPDATE appointments SET status = ?, facility = ?, timeSlot = ? WHERE id = ?',
+      'UPDATE appointments SET status = ?, facilityId = ?, timeSlotId = ? WHERE id = ?',
       status || appointment.status,
-      JSON.stringify(facility || appointment.facility),
-      JSON.stringify(timeSlot || appointment.timeSlot),
+      facilityId || appointment.facilityId,
+      timeSlotId || appointment.timeSlotId,
       id
     );
     const updatedAppointment = await db.get<Appointment>('SELECT * FROM appointments WHERE id = ?', id);
@@ -63,12 +71,12 @@ app.put('/appointments/:id', async (request, reply) => {
   }
 });
 
-app.delete('/appointments/:id', async (request, reply) => {
+app.delete<{ Params: { id: string } }>('/appointments/:id', async (request, reply) => {
   const db = await dbPromise;
-  const { id } = request.params;
+  const {id} = request.params;
   const appointment = await db.get<Appointment>('SELECT * FROM appointments WHERE id = ?', id);
   if (!appointment) {
-    reply.status(404).send({ message: 'Appointment not found' });
+    reply.status(404).send({message: 'Appointment not found'});
   } else {
     await db.run('DELETE FROM appointments WHERE id = ?', id);
     reply.status(204).send();
@@ -76,16 +84,18 @@ app.delete('/appointments/:id', async (request, reply) => {
 });
 
 // Start the server
-app.listen(PORT, async () => {
+app.listen(PORT,"0.0.0.0", async () => {
   const db = await dbPromise;
   await db.exec(`
     CREATE TABLE IF NOT EXISTS appointments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       status TEXT,
-      facility TEXT,
-      timeSlot TEXT,
+      facilityId TEXT,
+      timeSlotId TEXT,
       userId TEXT
     )
   `);
   console.log(`Server listening on port ${PORT}`);
 });
+
+export default app;

@@ -1,33 +1,17 @@
-import fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
-import { v4 as uuidv4 } from 'uuid';
+import fastify, {FastifyInstance, FastifyRequest} from 'fastify';
 
 interface User {
   id: string;
   name: string;
   email: string;
-  appointments: Appointment[];
-  results: Result[];
 }
 
 interface Appointment {
   id: string;
   status: 'CONFIRMED' | 'CANCELLED' | 'RESCHEDULED';
-  facility: {
-    id: string;
-    address: string;
-    city: string;
-    name: string;
-    lat: number;
-    lng: number;
-  };
-  timeSlot: {
-    id: string;
-    scheduledAt: string;
-    duration: number;
-  };
-  checkedInAt?: string;
-  beganAt?: string;
-  endedAt?: string;
+  facilityId: string,
+  timeSlotId: string,
+  userId: string
 }
 
 interface Result {
@@ -39,54 +23,45 @@ interface Result {
   seenAt?: string;
 }
 
-const users: User[] = [];
+interface AppointmentRequest extends FastifyRequest {
+  Params: {
+    id: string;
+  };
+  Body: Appointment;
+}
 
-const app: FastifyInstance = fastify({
-  logger: true,
+interface UserRequest extends FastifyRequest {
+  Params: {
+    id: string;
+  };
+}
+
+// initialize Fastify app
+const app: FastifyInstance = fastify({logger: true});
+
+
+// define routes
+app.post<AppointmentRequest>('/users/:id/appointments', async (req) => {
+  throw new Error('Not Implemented');
 });
 
-app.get('/users', async () => {
-  return users;
+app.get<UserRequest>('/users/:id/appointments', async (req) => {
+  throw new Error('Not Implemented');
 });
 
-app.get<{ Params: { id: string } }>('/users/:id', async (req) => {
-  const user = users.find((u) => u.id === req.params.id);
-  if (!user) {
-    throw new Error('User not found');
-  }
-  return user;
+app.get<UserRequest>('/users/:id/results', async (req) => {
+  throw new Error('Not Implemented');
 });
 
-app.post<{ Params: { id: string }, Body: Appointment }>('/users/:id/appointments', async (req) => {
-  const user = users.find((u) => u.id === req.params.id);
-  if (!user) {
-    throw new Error('User not found');
-  }
-  const appointment: Appointment = { id: uuidv4(), ...req.body };
-  user.appointments.push(appointment);
-  return appointment;
-});
-
-app.get<{ Params: { id: string } }>('/users/:id/appointments', async (req) => {
-  const user = users.find((u) => u.id === req.params.id);
-  if (!user) {
-    throw new Error('User not found');
-  }
-  return user.appointments;
-});
-
-app.get<{ Params: { id: string } }>('/users/:id/results', async (req) => {
-  const user = users.find((u) => u.id === req.params.id);
-  if (!user) {
-    throw new Error('User not found');
-  }
-  return user.results;
-});
-
-app.listen(3000, (err) => {
-  if (err) {
+// start the server
+const start = async () => {
+  try {
+    await app.listen(3000, "0.0.0.0")
+    console.log(`Server listening on ${app.server.address()}`);
+  } catch (err) {
     console.error(err);
     process.exit(1);
   }
-  console.log(`Server running on port 3000`);
-});
+};
+
+start();

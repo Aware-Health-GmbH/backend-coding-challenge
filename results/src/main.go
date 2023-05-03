@@ -12,17 +12,8 @@ import (
 	"github.com/mattn/go-sqlite3"
 	"github.com/rs/cors"
 	"github.com/rs/xid"
-	"github.com/ztrue/tracerr"
-	"github.com/ztrue/zgo/zhttp"
-	"github.com/ztrue/zgo/zhttp/zrequest"
-	"github.com/ztrue/zgo/zhttp/zresponse"
-	"github.com/ztrue/zgo/zhttp/zrouter"
-	"github.com/ztrue/zgo/zhttp/ztype"
-	"github.com/ztrue/zgo/zlog"
-	"github.com/ztrue/zgo/zvalidate"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/go-playground/validator.v9"
-	"gopkg.in/zeebo/errs.v2"
 )
 
 type Result struct {
@@ -103,7 +94,6 @@ func (a *App) CreateResult(r Result) (Result, error) {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(r.ID, r.Date, r.Notes, r.InRange, r.OutOfRange, r.SeenAt)
-	if err != nil {
 
 	return r, err
 }
@@ -149,11 +139,11 @@ func main() {
 	router.HandleFunc("/results", func(w http.ResponseWriter, r *http.Request) {
 		results, err := app.GetAllResults()
 		if err != nil {
-			zlog.Error(err)
-			zhttp.Response(w, zresponse.Error{Message: "Error getting results"})
+			log.Error(err)
+			http.Response(w, zresponse.Error{Message: "Error getting results"})
 			return
 		}
-		zhttp.Response(w, results)
+		http.Response(w, results)
 	}).Methods(http.MethodGet)
 
 	// Get a result by ID
