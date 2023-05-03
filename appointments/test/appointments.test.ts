@@ -11,6 +11,10 @@ const testAppointment: Appointment = {
 
 
 describe('appointments microservice', () => {
+  afterAll(async () => {
+    await app.close();
+  })
+
   it('should create a new appointment', async () => {
     const res = await app.inject({url: '/appointments', method: "POST", payload: testAppointment});
     expect(res.statusCode).toBe(201);
@@ -44,7 +48,7 @@ describe('appointments microservice', () => {
 
   it('should delete an existing appointment', async () => {
     const res = await app
-      .inject({url:`appointments/${testAppointment.id}`, method:"DELETE"})
+      .inject({url: `appointments/${testAppointment.id}`, method: "DELETE"})
     expect(res.statusCode).toBe(204);
   });
 });
